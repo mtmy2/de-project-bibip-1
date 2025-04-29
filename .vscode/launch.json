@@ -8,7 +8,7 @@
             "module": "pytest",
             "args": [
                 "-k",                 // Включаем режим фильтрации тестов
-                "test_add_new_car",   // Имя теста (без полного пути к файлу)
+                "test_sell_car",   // Имя теста (без полного пути к файлу)
                 "${workspaceFolder}"  // workspaceFolder Оставляем без изменений
             ],
             "justMyCode": false
