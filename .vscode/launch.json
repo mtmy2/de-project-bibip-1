@@ -15,7 +15,7 @@
             "module": "pytest",
             "args": [
                 "-k", // Включаем режим фильтрации тестов
-                "test_list_cars_by_available_status", // Имя теста (без полного пути к файлу)
+                "test_top_3_models_by_sales", // Имя теста (без полного пути к файлу)
                 "${workspaceFolder}" // workspaceFolder Оставляем без изменений
             ],
             "justMyCode": false

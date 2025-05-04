@@ -1,4 +1,5 @@
 from models import Car, CarFullInfo, CarStatus, Model, ModelSaleStats, Sale
+from decimal import Decimal
 
 
 class CarService:
@@ -111,7 +112,7 @@ class CarService:
     # Задание 4. Детальная информация
     def get_car_info(self, vin: str) -> CarFullInfo | None:
         # получение номера строки с нужным vin из car_index
-        with open(f'{self.root_directory_path}/car_index.txt', 'r+') as ci:
+        with open(f'{self.root_directory_path}/cars_index.txt', 'r+') as ci:
             cars_index_lines = ci.readlines()
             for line in cars_index_lines:
                 current_index_line = line.strip().split(',')
@@ -168,18 +169,110 @@ class CarService:
         return CarFullInfo(vin, current_model, current_brand, price, date_start, current_status, current_sales_date, current_sales_cost)
             
 
-        
-            
-
-
+   
     # Задание 5. Обновление ключевого поля
     def update_vin(self, vin: str, new_vin: str) -> Car:
-        raise NotImplementedError
-
+        i=-1
+        #нахождение строки со старым vin
+        with open(f'{self.root_directory_path}/car_index.txt', 'r+') as ci:
+            lines = ci.readlines()
+            for line in lines:
+                i=i+1
+                line_list = line.strip().split(',')
+                if vin == line_list[0]:
+                    cars_line_number = int(line_list[1])
+                    # обновление vin в car_index
+                    lines[i] = new_vin + cars_line_number + '\n'  
+                    with open(f'{self.root_directory_path}/car_index.txt', 'r+') as ci:
+                        ci.seek(0)
+                        ci.writelines(lines)
+                    break    
+        # обновление vin в cars  
+        with open(f'{self.root_directory_path}/cars.txt', 'r+') as cars:
+            lines = cars.readlines()
+            line_list = lines[cars_line_number-1].strip().split(',')
+            line_list[0] = new_vin  
+            lines[cars_line_number-1] = ','.join(line_list) + '\n'  
+            cars.seek(0)
+            cars.writelines(lines)
+        
     # Задание 6. Удаление продажи
     def revert_sale(self, sales_number: str) -> Car:
-        raise NotImplementedError
+        # поиск строки с нужной продажей
+        with open(f'{self.root_directory_path}/sales_index.txt', 'r') as si:
+            lines = si.readlines()
+            for line in lines:
+                line_list = line.strip().split(',')
+                if line_list[0] == sales_number:
+                    sales_row_number = int(line_list[1]) - 1
+                    break
+                else:
+                    return None
+        
+        with open(f'{self.root_directory_path}/sales.txt', 'r') as s:
+            lines = s.readlines()
+            line = lines[sales_row_number].strip().split(',')
+            vin = line[1].strip()
+            if line[0] == sales_number and self.is_deleted == False:
+                self.is_deleted = True
 
+        with open(f'{self.root_directory_path}/cars_index.txt', 'r') as ci:
+            lines = ci.readlines()                   
+            for line in lines:
+                lines_list = line.strip().split(',')
+                cars_vin = lines_list[0].strip()           
+                if vin == cars_vin:
+                    cars_row_number = int(parts[1].strip()) - 1
+                    break
+          
+        with open(f'{self.root_directory_path}/cars.txt', 'r+') as cars:
+            lines = cars.readlines()
+            lines_list = lines[cars_row_number].strip().split(',')
+            lines_list[-1] = 'available'  
+            lines[cars_row_number] = ','.join(lines_list) + '\n'  
+            cars.seek(0)
+            cars.writelines(lines)
+    
     # Задание 7. Самые продаваемые модели
     def top_models_by_sales(self) -> list[ModelSaleStats]:
-        raise NotImplementedError
+        sales_dict: dict[int, int] = {}
+        cars_dict: dict[str, int] = {}
+        prices: dict[int, Decimal] = {}
+        result = []
+
+        with open(f'{self.root_directory_path}/cars.txt', 'r') as cars:
+            lines = cars.readlines()
+            for line in lines:
+                line_list = line.strip().split(',')
+                cars_dict[line_list[0]] = int(line_list[1])
+
+        with open(f'{self.root_directory_path}/sales.txt', 'r') as s:
+            lines = s.readlines()
+            for line in lines:
+                line_list = line.strip().split(',')
+                model = cars_dict[vin]
+                vin = line_list[1].strip()  
+                price = Decimal(line_list[2])
+                if vin in cars_dict:
+                    sales_dict[model] = sales_dict[model] + 1
+                    prices[model] = price
+
+        sorted_models: list[int] = sorted(
+            sales_dict.keys(),
+            key=lambda x: (-sales_dict[x], -prices.get(x, Decimal(0)))
+        )[:3]
+
+        for item in sorted_models:
+            item_list = item.strip().split(',')
+            with open(f'{self.root_directory_path}/models.txt', 'r',) as m:
+                lines = m.readlines()
+                for line in lines:
+                    line_list = line.strip().split(',')
+                    if item_list[1] == line_list[0]:
+                        result.append(ModelSaleStats(
+                            car_model_name=line_list[1],
+                            brand=line_list[2],
+                            sales_number=item_list[1]
+                        ))
+        return result
+
