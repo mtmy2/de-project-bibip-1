@@ -2,14 +2,21 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python Debugger: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal"
+        },
+        {
             "name": "Python: Bibip",
             "type": "python",
             "request": "launch",
             "module": "pytest",
             "args": [
-                "-k",                 // Включаем режим фильтрации тестов
-                "test_sell_car",   // Имя теста (без полного пути к файлу)
-                "${workspaceFolder}"  // workspaceFolder Оставляем без изменений
+                "-k", // Включаем режим фильтрации тестов
+                "test_list_cars_by_available_status", // Имя теста (без полного пути к файлу)
+                "${workspaceFolder}" // workspaceFolder Оставляем без изменений
             ],
             "justMyCode": false
         }

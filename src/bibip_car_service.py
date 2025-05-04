@@ -45,24 +45,26 @@ class CarService:
 
     # Задание 2. Сохранение продаж.
     def sell_car(self, sale: Sale) -> Car:
-        cars_line = 0
+        #cars_line = 0
         # запись в файл sales.txt
         with open(f'{self.root_directory_path}/sales.txt', 'a') as sales:
             sales.write(f'{sale.sales_number},{sale.car_vin},{sale.sales_date},{sale.cost}'.ljust(500)+'\n')
 
         # Запись в файл sales_index.txt
         with open(f'{self.root_directory_path}/sales_index.txt', 'w+') as si:
-            line_number = len(si.readlines())+1
-            if si.readlines() == []:
-                sales_index_new = [f'{sale.car_vin},{line_number}'+'\n']
+            readlines=si.readlines()
+            line_number = len(readlines)
+            if line_number == 0:
+                readlines = [f'{sale.car_vin},{line_number+1}'+'\n']
             else:
-                sales_index_new = si.readlines().append(f'{sale.car_vin},{line_number}'+'\n')
-            sales_index_sorted = sorted(sales_index_new)
+                readlines.append(f'{sale.car_vin},{line_number+1}'+'\n')
+            sales_index_sorted = sorted(readlines)
+        with open(f'{self.root_directory_path}/sales_index.txt', 'a') as si:
             for line in sales_index_sorted:
-                si.write(f'{line}\n')
+                si.write(f'{line}')
 
         # получение номера строки с нужным vin из car_index
-        with open(f'{self.root_directory_path}/cars_index.txt', 'w+') as ci:
+        with open(f'{self.root_directory_path}/cars_index.txt', 'r+') as ci:
             cars_index_lines = ci.readlines()
             for line in cars_index_lines:
                 current_index_line = line.strip().split(',')
@@ -70,10 +72,11 @@ class CarService:
                 current_cars_line = current_index_line[1]
                 if vin == sale.car_vin:
                     cars_line = int(current_cars_line)
-                    
+
+            
 
         # получение строки с нужным vin из cars
-        with open(f'{self.root_directory_path}/cars.txt', 'w+') as cars:
+        with open(f'{self.root_directory_path}/cars.txt', 'r+') as cars:
             lines = cars.readlines()
             current_car_info_raw = lines[cars_line-1]
             current_car_info = current_car_info_raw.strip().split(',')
@@ -87,12 +90,28 @@ class CarService:
 
     # Задание 3. Доступные к продаже
     def get_cars(self, status: CarStatus) -> list[Car]:
-        raise NotImplementedError
-
+        raw_cars = []
+        available_cars = []
+        with open(f'{self.root_directory_path}/cars.txt', 'r+') as cars:
+            for raw_line in cars:            
+                line = raw_line.strip().split(',')
+                if line[-1].strip() == 'available':
+                    car_data = {
+                        "vin": line[0],
+                        "model": int(line[1]),
+                        "price": line[2],
+                        "date_start": line[3].strip(),
+                        "status": CarStatus(line[4].strip()),
+                        }
+                    available_cars.append(Car(**car_data))
+        return available_cars
+                    
+                    
+ 
     # Задание 4. Детальная информация
     def get_car_info(self, vin: str) -> CarFullInfo | None:
         # получение номера строки с нужным vin из car_index
-        with open(f'{self.root_directory_path}/car_index.txt', 'w+') as ci:
+        with open(f'{self.root_directory_path}/car_index.txt', 'r+') as ci:
             cars_index_lines = ci.readlines()
             for line in cars_index_lines:
                 current_index_line = line.strip().split(',')
@@ -101,7 +120,7 @@ class CarService:
                 if vin == current_vin:
                     cars_line = int(current_cars_line)
         # получение строки с нужным vin из car
-        with open(f'{self.root_directory_path}/cars.txt', 'w+') as cars:
+        with open(f'{self.root_directory_path}/cars.txt', 'r+') as cars:
             lines = cars.readlines()
             current_car_info = lines[cars_line-1].strip().split(',')
             current_model = current_car_info[1]
@@ -111,7 +130,7 @@ class CarService:
 
 
         # получение номера строки с нужной моделью из model_index
-        with open(f'{self.root_directory_path}/models_index.txt', 'w+') as mi:
+        with open(f'{self.root_directory_path}/models_index.txt', 'r+') as mi:
             models_index_lines = mi.readlines()
             for line in models_index_lines:
                 current_model_index = line.strip().split(',')
@@ -120,14 +139,14 @@ class CarService:
                 if model == current_model:
                     models_line = int(current_models_line)
         # получение строки с нужной моделью из models
-        with open(f'{self.root_directory_path}/models.txt', 'w+') as m:
+        with open(f'{self.root_directory_path}/models.txt', 'r+') as m:
             lines = m.readlines()
             current_model_info = lines[models_line-1].strip().split(',')
             current_brand = current_model_info[2]
 
 
         # получение номера строки с нужным vin из sales_index
-        with open(f'{self.root_directory_path}/sales_index.txt', 'w+') as si:
+        with open(f'{self.root_directory_path}/sales_index.txt', 'r+') as si:
             vin_index_lines = si.readlines()
             for line in vin_index_lines:
                 current_sales_index = line.strip().split(',')
@@ -136,7 +155,7 @@ class CarService:
                 if vin == current_vin_line:
                     sales_line = int(current_vin_line)
         # получение строки с нужным vin из sales
-        with open(f'{self.root_directory_path}/sales.txt', 'w+') as s:
+        with open(f'{self.root_directory_path}/sales.txt', 'r+') as s:
             lines = s.readlines()
             current_sale_info = lines[sales_line-1].strip().split(',')
             if current_status == 'sold':
