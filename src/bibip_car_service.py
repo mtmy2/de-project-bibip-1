@@ -20,7 +20,7 @@ class CarService:
             m.write(f'{model.id},{model.name},{model.brand}'.ljust(self.cell_size)+'\n')
 
         # Запись в файл models_index.txt
-        with open(self.models, 'w+') as mi:
+        with open(self.models, 'r+') as mi:
             lines = mi.readlines()
             line_number = str(len(lines)+1)
             if lines == []:
@@ -38,7 +38,7 @@ class CarService:
             cars.write(f'{car.vin},{car.model},{car.price},{car.date_start},{car.status}'.ljust(self.cell_size)+'\n')
 
         # Запись в файл cars_index.txt
-        with open(self.cars_i, 'w+') as ci:
+        with open(self.cars_i, 'a') as ci:
             line_number = len(ci.readlines())+1
             if ci.readlines() == []:
                 cars_index_new = [f'{car.vin},{line_number}'+'\n']
@@ -56,7 +56,7 @@ class CarService:
             sales.write(f'{sale.sales_number},{sale.car_vin},{sale.sales_date},{sale.cost}'.ljust(self.cell_size)+'\n')
 
         # Запись в файл sales_index.txt
-        with open(self.sales_i, 'w+') as si:
+        with open(self.sales_i, 'a') as si:
             readlines=si.readlines()
             line_number = len(readlines)
             if line_number == 0:
@@ -81,7 +81,7 @@ class CarService:
             
 
         # получение строки с нужным vin из cars
-        with open(self.cars, 'r+') as cars:
+        with open(self.cars, 'a') as cars:
             lines = cars.readlines()
             current_car_info_raw = lines[cars_line-1]
             current_car_info = current_car_info_raw.strip().split(',')
