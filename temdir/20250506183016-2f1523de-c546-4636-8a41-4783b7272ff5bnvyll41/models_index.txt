@@ -1,0 +1,5 @@
+3,3
+Logan,5
+Optima,1
+Pathfinder,4
+Sorento,2

@@ -12,6 +12,7 @@ class CarService:
         self.cars_i = f'{self.root_directory_path}/cars_index.txt'
         self.sales = f'{self.root_directory_path}/sales.txt'
         self.sales_i = f'{self.root_directory_path}/sales_index.txt'
+        self.init_files()
 
     # создание файлов если их еще нет
     def init_file(self, file_name):
@@ -21,20 +22,6 @@ class CarService:
         file_names = ['cars.txt', 'models.txt', 'sales.txt', 'cars_index.txt', 'models_index.txt', 'sales_index.txt']
         for file_name in file_names:
             self.init_file(file_name)
-
-    def init_files(self):
-            with open(self.models, 'w') as f:
-                pass
-            with open(f'{self.root_directory_path}/models_index.txt', 'w') as f:
-                pass
-            with open(self.cars, 'w') as f:
-                pass
-            with open(f'{self.root_directory_path}/cars_index.txt', 'w') as f:
-                pass
-            with open(self.sales, 'w') as f:
-                pass
-            with open(f'{self.root_directory_path}/sales_index.txt', 'w') as f:
-                pass
 
     # Задание 1. Сохранение автомобилей и моделей
     def add_model(self, model: Model) -> Model:
@@ -96,8 +83,6 @@ class CarService:
                 if vin == sale.car_vin:
                     cars_line = int(current_cars_line)
 
-            
-
         # получение строки с нужным vin из cars
         with open(self.cars, 'r+') as cars:
             lines = cars.readlines()
@@ -127,68 +112,59 @@ class CarService:
                         }
                     available_cars.append(Car(**car_data))
         return available_cars
-                    
-                    
  
     # Задание 4. Детальная информация
-    def get_car_info(self, vin: str) -> CarFullInfo | None:
-        # получение номера строки с нужным vin из car_index
-        with open(self.cars_i, 'r+') as ci:
-            cars_index_lines = ci.readlines()
-            for line in cars_index_lines:
-                current_index_line = line.strip().split(',')
-                current_vin = current_index_line[0]
-                current_cars_line = current_index_line[1]
-                if vin == current_vin:
-                    cars_line = int(current_cars_line)
-        # получение строки с нужным vin из car
-        with open(self.cars, 'r+') as cars:
-            lines = cars.readlines()
-            current_car_info = lines[cars_line-1].strip().split(',')
-            current_model = current_car_info[1]
-            current_status = current_car_info[4]
-            price = current_car_info[2]
-            date_start = current_car_info[3]
-
-
-        # получение номера строки с нужной моделью из model_index
-        with open(self.models_i, 'r+') as mi:
-            models_index_lines = mi.readlines()
-            for line in models_index_lines:
-                current_model_index = line.strip().split(',')
-                model = current_model_index[0]
-                current_models_line = current_model_index[1]
-                if model == current_model:
-                    models_line = int(current_models_line)
-        # получение строки с нужной моделью из models
-        with open(self.models, 'r+') as m:
-            lines = m.readlines()
-            current_model_info = lines[models_line-1].strip().split(',')
-            current_brand = current_model_info[2]
-
-
-        # получение номера строки с нужным vin из sales_index
-        with open(self.sales_i, 'r+') as si:
-            vin_index_lines = si.readlines()
-            for line in vin_index_lines:
-                current_sales_index = line.strip().split(',')
-                vin = current_sales_index[0]
-                current_vin_line = current_sales_index[1]
-                if vin == current_vin_line:
-                    sales_line = int(current_vin_line)
-        # получение строки с нужным vin из sales
-        with open(self.sales, 'r+') as s:
-            lines = s.readlines()
-            current_sale_info = lines[sales_line-1].strip().split(',')
-            if current_status == 'sold':
-                current_sales_date = None
-                current_sales_cost = None
+    def get_car_info(self, vin: str) -> CarFullInfo | None:  
+        """Вывод информацию о машине по VIN-коду."""
+        with open(self.cars_i, 'r') as ci:
+            lines = ci.readlines()        
+            for line in lines:
+                parts = line.strip().split(',')    
+                if vin == parts[0]:
+                    row_index_car = (int(parts[1]))
+                    break
             else:
-                current_sales_date = current_sale_info[2]
-                current_sales_cost = current_sale_info[3]
-
-        return CarFullInfo(vin, current_model, current_brand, price, date_start, current_status, current_sales_date, current_sales_cost)
+                return None     
+   
+        with open(self.cars, 'r') as cars, \
+             open(self.models, 'r') as m:
             
+            f_model_lines = m.readlines()
+            f_cars_lines = cars.readlines()
+            search_parts_f_cars = f_cars_lines[row_index_car - 1].strip().split(',') 
+            key_model = int(search_parts_f_cars[1])
+            status_part = search_parts_f_cars[-1].strip()
+            search_parts_f_model = f_model_lines[key_model - 1] 
+                     
+            if status_part != 'sold':             
+                join_info_sold = ','.join(search_parts_f_cars + [search_parts_f_model]).split(',')                            
+                available_data = CarFullInfo(
+                        vin=join_info_sold[0].strip(),
+                        car_model_name=join_info_sold[6].strip(),
+                        car_model_brand=join_info_sold[7].strip(),
+                        price=join_info_sold[2].strip(),
+                        date_start=join_info_sold[3].strip(),
+                        status=CarStatus(join_info_sold[4].strip()),
+                        sales_date=None,
+                        sales_cost=None
+                )
+                return available_data
+            else:   
+                with open(self.sales, 'r') as s:
+                    f_sales_lines = s.readlines()
+                    join_info_sold = ','.join(search_parts_f_cars + [search_parts_f_model]).split(',') 
+                    sold_raw_data = ','.join(join_info_sold + f_sales_lines).split(',')
+                    sold_data = CarFullInfo(
+                        vin=sold_raw_data[0].strip(),
+                        car_model_name=sold_raw_data[6].strip(),
+                        car_model_brand=sold_raw_data[7].strip(),
+                        price=sold_raw_data[2].strip(),
+                        date_start=sold_raw_data[3].strip(),
+                        status=CarStatus(sold_raw_data[4].strip()),
+                        sales_date=sold_raw_data[-2].strip(),
+                        sales_cost=sold_raw_data[-1].strip()
+                    )
+                    return sold_data       
 
    
     # Задание 5. Обновление ключевого поля
@@ -201,7 +177,7 @@ class CarService:
                 i=i+1
                 line_list = line.strip().split(',')
                 if vin == line_list[0]:
-                    cars_line_number = int(line_list[1])
+                    cars_line_number = line_list[1]
                     # обновление vin в car_index
                     lines[i] = new_vin + cars_line_number + '\n'  
                     with open(self.cars_i, 'r+') as ci:
@@ -211,9 +187,9 @@ class CarService:
         # обновление vin в cars  
         with open(self.cars, 'r+') as cars:
             lines = cars.readlines()
-            line_list = lines[cars_line_number-1].strip().split(',')
+            line_list = lines[int(cars_line_number)-1].strip().split(',')
             line_list[0] = new_vin  
-            lines[cars_line_number-1] = ','.join(line_list) + '\n'  
+            lines[int(cars_line_number)-1] = ','.join(line_list) + '\n'  
             cars.seek(0)
             cars.writelines(lines)
         
@@ -243,7 +219,7 @@ class CarService:
                 lines_list = line.strip().split(',')
                 cars_vin = lines_list[0].strip()           
                 if vin == cars_vin:
-                    cars_row_number = int(parts[1].strip()) - 1
+                    cars_row_number = int(lines_list[1].strip()) - 1
                     break
           
         with open(self.cars, 'r+') as cars:
