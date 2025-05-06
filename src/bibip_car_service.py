@@ -13,6 +13,15 @@ class CarService:
         self.sales = f'{self.root_directory_path}/sales.txt'
         self.sales_i = f'{self.root_directory_path}/sales_index.txt'
 
+    # создание файлов если их еще нет
+    def init_file(self, file_name):
+        with open(f'{self.root_directory_path}/{file_name}', 'w') as f:
+            pass
+    def init_files(self):
+        file_names = ['cars.txt', 'models.txt', 'sales.txt', 'cars_index.txt', 'models_index.txt', 'sales_index.txt']
+        for file_name in file_names:
+            self.init_file(file_name)
+
     # Задание 1. Сохранение автомобилей и моделей
     def add_model(self, model: Model) -> Model:
         # запись в файл model.txt
@@ -23,13 +32,10 @@ class CarService:
         with open(self.models, 'r+') as mi:
             lines = mi.readlines()
             line_number = str(len(lines)+1)
-            if lines == []:
-                model_index_new = [f'{model.name},{line_number}'+'\n']
-            else:
-                model_index_new = lines.append(f'{model.name},{line_number}'+'\n')
-            models_index_sorted = sorted(model_index_new)
-            for line in models_index_sorted:
-                mi.write(f'{line}\n')
+            lines.append(f'{model.name},{line_number}'+'\n')
+            models_index_sorted = sorted(lines)
+            mi.seek(0)
+            mi.writelines(models_index_sorted) 
 
     # Задание 1. Сохранение автомобилей и моделей
     def add_car(self, car: Car) -> Car:
@@ -38,15 +44,13 @@ class CarService:
             cars.write(f'{car.vin},{car.model},{car.price},{car.date_start},{car.status}'.ljust(self.cell_size)+'\n')
 
         # Запись в файл cars_index.txt
-        with open(self.cars_i, 'a') as ci:
-            line_number = len(ci.readlines())+1
-            if ci.readlines() == []:
-                cars_index_new = [f'{car.vin},{line_number}'+'\n']
-            else:
-                cars_index_new = ci.readlines().append(f'{car.vin},{line_number}'+'\n')
-            cars_index_sorted = sorted(cars_index_new)
-            for line in cars_index_sorted:
-                ci.write(f'{line}\n')
+        with open(self.cars_i, 'r+') as ci:
+            current_index = list(ci.readlines())
+            line_number = len(current_index)+1
+            current_index.append(f'{car.vin},{line_number}'+'\n')
+            cars_index_sorted = sorted(current_index)
+            ci.seek(0)
+            ci.writelines(cars_index_sorted) 
 
     # Задание 2. Сохранение продаж.
     def sell_car(self, sale: Sale) -> Car:
@@ -56,7 +60,7 @@ class CarService:
             sales.write(f'{sale.sales_number},{sale.car_vin},{sale.sales_date},{sale.cost}'.ljust(self.cell_size)+'\n')
 
         # Запись в файл sales_index.txt
-        with open(self.sales_i, 'a') as si:
+        with open(self.sales_i, 'r+') as si:
             readlines=si.readlines()
             line_number = len(readlines)
             if line_number == 0:
@@ -81,7 +85,7 @@ class CarService:
             
 
         # получение строки с нужным vin из cars
-        with open(self.cars, 'a') as cars:
+        with open(self.cars, 'r+') as cars:
             lines = cars.readlines()
             current_car_info_raw = lines[cars_line-1]
             current_car_info = current_car_info_raw.strip().split(',')
