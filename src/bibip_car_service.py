@@ -22,6 +22,20 @@ class CarService:
         for file_name in file_names:
             self.init_file(file_name)
 
+    def init_files(self):
+            with open(self.models, 'w') as f:
+                pass
+            with open(f'{self.root_directory_path}/models_index.txt', 'w') as f:
+                pass
+            with open(self.cars, 'w') as f:
+                pass
+            with open(f'{self.root_directory_path}/cars_index.txt', 'w') as f:
+                pass
+            with open(self.sales, 'w') as f:
+                pass
+            with open(f'{self.root_directory_path}/sales_index.txt', 'w') as f:
+                pass
+
     # Задание 1. Сохранение автомобилей и моделей
     def add_model(self, model: Model) -> Model:
         # запись в файл model.txt
@@ -29,7 +43,7 @@ class CarService:
             m.write(f'{model.id},{model.name},{model.brand}'.ljust(self.cell_size)+'\n')
 
         # Запись в файл models_index.txt
-        with open(self.models, 'r+') as mi:
+        with open(self.models_i, 'r+') as mi:
             lines = mi.readlines()
             line_number = str(len(lines)+1)
             lines.append(f'{model.name},{line_number}'+'\n')
@@ -99,7 +113,6 @@ class CarService:
 
     # Задание 3. Доступные к продаже
     def get_cars(self, status: CarStatus) -> list[Car]:
-        raw_cars = []
         available_cars = []
         with open(self.cars, 'r+') as cars:
             for raw_line in cars:            
