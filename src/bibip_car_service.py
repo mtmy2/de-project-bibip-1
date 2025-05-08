@@ -65,9 +65,9 @@ class CarService:
             readlines=si.readlines()
             line_number = len(readlines)
             if line_number == 0:
-                readlines = [f'{sale.car_vin},{line_number+1}'+'\n']
+                readlines = [f'{sale.sales_number},{line_number+1}'+'\n']
             else:
-                readlines.append(f'{sale.car_vin},{line_number+1}'+'\n')
+                readlines.append(f'{sale.sales_number},{line_number+1}'+'\n')
             sales_index_sorted = sorted(readlines)
         with open(self.sales_i, 'a') as si:
             for line in sales_index_sorted:
@@ -91,9 +91,9 @@ class CarService:
         # запись статуса в нужный список
             current_car_info[4] = 'sold'
         # преобразование списка в строку и запись в файл
-            new_car_line = f'{current_car_info[0]},{current_car_info[1]},{current_car_info[2]},{current_car_info[3]},{current_car_info[4]}'.ljust(self.cell_size)+'\n'
-            cars.seek((cars_line-1) * (self.cell_size+1))
-            cars.write(new_car_line)
+            lines[cars_line-1] = f'{current_car_info[0]},{current_car_info[1]},{current_car_info[2]},{current_car_info[3]},{current_car_info[4]}'.ljust(self.cell_size)+'\n'
+            cars.seek(0)
+            cars.writelines(lines)
 
 
     # Задание 3. Доступные к продаже
@@ -179,7 +179,7 @@ class CarService:
                 if vin == line_list[0]:
                     cars_line_number = line_list[1]
                     # обновление vin в car_index
-                    lines[i] = new_vin + cars_line_number + '\n'  
+                    lines[i] = f'{new_vin},{cars_line_number}' + '\n'  
                     with open(self.cars_i, 'r+') as ci:
                         ci.seek(0)
                         ci.writelines(lines)
@@ -196,22 +196,28 @@ class CarService:
     # Задание 6. Удаление продажи
     def revert_sale(self, sales_number: str) -> Car:
         # поиск строки с нужной продажей
-        with open(self.sales_i, 'r') as si:
+        i=0
+        with open(self.sales_i, 'r+') as si:
             lines = si.readlines()
             for line in lines:
+                i=i+1
                 line_list = line.strip().split(',')
                 if line_list[0] == sales_number:
                     sales_row_number = int(line_list[1]) - 1
+                    line_list[0] = 'is_deleted'
+                    lines[i-1] = ','.join(line_list) + '\n'
                     break
                 else:
                     return None
-        
+            si.seek(0)
+            si.writelines(lines)
+
         with open(self.sales, 'r') as s:
             lines = s.readlines()
             line = lines[sales_row_number].strip().split(',')
             vin = line[1].strip()
-            if line[0] == sales_number and self.is_deleted == False:
-                self.is_deleted = True
+            if line[0] == sales_number:
+                line[0] = 'is_deleted'
 
         with open(self.cars_i, 'r') as ci:
             lines = ci.readlines()                   
@@ -249,11 +255,11 @@ class CarService:
             lines = s.readlines()
             for line in lines:
                 line_list = line.strip().split(',')
+                vin = line_list[1].strip()
                 model = cars_dict[vin]
-                vin = line_list[1].strip()  
-                price = Decimal(line_list[2])
+                price = Decimal(line_list[3].strip())
                 if vin in cars_dict:
-                    sales_dict[model] = sales_dict[model] + 1
+                    sales_dict[model] = sales_dict.get(model, 0) + 1
                     prices[model] = price
 
         # сортировка
@@ -264,16 +270,15 @@ class CarService:
 
         # подтягивание модели и брнеда по model_id в отсортированныый список
         for item in sorted_models:
-            item_list = item.strip().split(',')
-            with open(self.models, 'r',) as m:
+            with open(self.models, 'r') as m:
                 lines = m.readlines()
                 for line in lines:
                     line_list = line.strip().split(',')
-                    if item_list[1] == line_list[0]:
+                    if item == int(line_list[0]):
                         result.append(ModelSaleStats(
                             car_model_name=line_list[1],
                             brand=line_list[2],
-                            sales_number=item_list[1]
+                            sales_number=sales_dict[item]
                         ))
         return result
 
